@@ -83,8 +83,10 @@ fn handle_connection(mut stream: TcpStream) {
     // For example, when using cool math games, it needs http://localhost/sites/default/files/2024-09/Simulation.svg
     // so we will request https://www.coolmathgames/sites/default/files/2024-09/Simulation.svg and return it.
 
+    let req = String::new();
+
     let new_req = format!(
-        "GET {} HTTP/1.1\r\nHost: www.coolmathgames.com\r\nConnection: close\r\nAccept-Encoding: identity\r\n\r\n", *request_parts.get(1).expect("Bad Request")
+        "GET {} HTTP/1.1\r\nHost: www.coolmathgames.com\r\nConnection: close\r\nAccept-Encoding: identity\r\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:135.0) Gecko/20100101 Firefox/135.0\r\n\r\n", *request_parts.get(1).expect("Bad Request")
     );
 
     println!("{}", new_req);
