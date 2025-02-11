@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     io::{BufRead, BufReader, Read, Write},
     net::{TcpListener, TcpStream},
     sync::Arc,
@@ -45,17 +46,39 @@ fn make_https_request(website: String, request: &[u8]) -> String {
 }
 
 fn handle_connection(mut stream: TcpStream) {
-    let buf_reader = BufReader::new(&stream);
+    let mut buf_reader = BufReader::new(&stream);
+
+    let mut line_buf = String::new();
+
+    if let Err(_) = buf_reader.read_line(&mut line_buf) {
+        return;
+    }
+
+    let request_parts: Vec<&str> = line_buf.split_whitespace().collect();
+
+    let mut headers = HashMap::new();
+
+    loop {
+        let mut line_buf = String::new();
+
+        if let Err(_) = buf_reader.read_line(&mut line_buf) {
+            return;
+        }
+
+        if line_buf.is_empty() || line_buf == "\n" || line_buf == "\r\n" {
+            break;
+        }
+
+        let mut comps = line_buf.split(":");
+        let key = comps.next().unwrap_or("None");
+        let value = comps.next().unwrap_or("None").trim();
+
+        headers.insert(key.to_string(), value.to_string());
+    }
 
     // We need to parse every request going to localhost and proxy it
     // For example, when using cool math games, it needs http://localhost/sites/default/files/2024-09/Simulation.svg
     // so we will request https://www.coolmathgames/sites/default/files/2024-09/Simulation.svg and return it.
-
-    let http_request: Vec<_> = buf_reader
-        .lines()
-        .map(|result| result.unwrap())
-        .take_while(|line| !line.is_empty())
-        .collect();
 
     stream
         .write_all(
