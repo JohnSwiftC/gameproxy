@@ -46,6 +46,11 @@ fn make_https_request(website: String, request: &[u8]) -> String {
 
 fn handle_connection(mut stream: TcpStream) {
     let buf_reader = BufReader::new(&stream);
+
+    // We need to parse every request going to localhost and proxy it
+    // For example, when using cool math games, it needs http://localhost/sites/default/files/2024-09/Simulation.svg
+    // so we will request https://www.coolmathgames/sites/default/files/2024-09/Simulation.svg and return it.
+
     let http_request: Vec<_> = buf_reader
         .lines()
         .map(|result| result.unwrap())
