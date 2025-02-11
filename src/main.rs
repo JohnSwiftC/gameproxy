@@ -3,6 +3,7 @@ use std::{
     io::{BufRead, BufReader, Read, Write},
     net::{TcpListener, TcpStream},
     sync::Arc,
+    thread,
 };
 
 use rustls::{
@@ -16,11 +17,13 @@ fn main() {
     for stream in listener.incoming() {
         let stream = stream.unwrap();
 
-        handle_connection(stream);
+        thread::spawn(move || {
+            handle_connection(stream);
+        });
     }
 }
 
-fn make_https_request(website: String, request: &[u8]) -> String {
+fn make_https_request(website: String, request: &[u8]) -> Vec<u8> {
     let root_store = RootCertStore::from_iter(webpki_roots::TLS_SERVER_ROOTS.iter().cloned());
 
     let config = ClientConfig::builder()
@@ -42,7 +45,7 @@ fn make_https_request(website: String, request: &[u8]) -> String {
 
     tls_stream.read_to_end(&mut response).unwrap();
 
-    String::from_utf8(response).expect("Bad Bytes")
+    response
 }
 
 fn handle_connection(mut stream: TcpStream) {
@@ -80,20 +83,16 @@ fn handle_connection(mut stream: TcpStream) {
     // For example, when using cool math games, it needs http://localhost/sites/default/files/2024-09/Simulation.svg
     // so we will request https://www.coolmathgames/sites/default/files/2024-09/Simulation.svg and return it.
 
+    let new_req = format!(
+        "GET {} HTTP/1.1\r\nHost: www.coolmathgames.com\r\nConnection: close\r\nAccept-Encoding: identity\r\n\r\n", *request_parts.get(1).expect("Bad Request")
+    );
+
+    println!("{}", new_req);
+
     stream
-        .write_all(
-            make_https_request(
-                "www.coolmathgames.com".into(),
-                concat!(
-                    "GET / HTTP/1.1\r\n",
-                    "Host: www.coolmathgames.com\r\n",
-                    "Connection: close\r\n",
-                    "Accept-Encoding: identity\r\n",
-                    "\r\n"
-                )
-                .as_bytes(),
-            )
-            .as_bytes(),
-        )
+        .write_all(&make_https_request(
+            "www.coolmathgames.com".into(),
+            new_req.as_bytes(),
+        ))
         .unwrap();
 }
