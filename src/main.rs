@@ -1,5 +1,5 @@
 use std::{
-    io::{Read, Write},
+    io::{BufRead, BufReader, Read, Write},
     net::{TcpListener, TcpStream},
     sync::Arc,
 };
@@ -10,20 +10,13 @@ use rustls::{
 };
 
 fn main() {
-    println!(
-        "{}",
-        make_https_request(
-            "www.rust-lang.com".into(),
-            concat!(
-                "GET / HTTP/1.1\r\n",
-                "Host: www.rust-lang.org\r\n",
-                "Connection: close\r\n",
-                "Accept-Encoding: identity\r\n",
-                "\r\n"
-            )
-            .as_bytes(),
-        )
-    );
+    let listener = TcpListener::bind("127.0.0.1:80").unwrap();
+
+    for stream in listener.incoming() {
+        let stream = stream.unwrap();
+
+        handle_connection(stream);
+    }
 }
 
 fn make_https_request(website: String, request: &[u8]) -> String {
@@ -49,4 +42,30 @@ fn make_https_request(website: String, request: &[u8]) -> String {
     tls_stream.read_to_end(&mut response).unwrap();
 
     String::from_utf8(response).expect("Bad Bytes")
+}
+
+fn handle_connection(mut stream: TcpStream) {
+    let buf_reader = BufReader::new(&stream);
+    let http_request: Vec<_> = buf_reader
+        .lines()
+        .map(|result| result.unwrap())
+        .take_while(|line| !line.is_empty())
+        .collect();
+
+    stream
+        .write_all(
+            make_https_request(
+                "www.coolmathgames.com".into(),
+                concat!(
+                    "GET / HTTP/1.1\r\n",
+                    "Host: www.coolmathgames.com\r\n",
+                    "Connection: close\r\n",
+                    "Accept-Encoding: identity\r\n",
+                    "\r\n"
+                )
+                .as_bytes(),
+            )
+            .as_bytes(),
+        )
+        .unwrap();
 }
