@@ -1,8 +1,9 @@
 use std::{
     collections::HashMap,
+    fs,
     io::{BufRead, BufReader, Read, Write},
     net::{TcpListener, TcpStream},
-    sync::Arc,
+    sync::{Arc, Mutex},
     thread,
 };
 
@@ -13,12 +14,14 @@ use rustls::{
 
 fn main() {
     let listener = TcpListener::bind("127.0.0.1:80").unwrap();
+    let currentSite = Arc::new(Mutex::new(String::new()));
 
     for stream in listener.incoming() {
         let stream = stream.unwrap();
+        let currentSite = Arc::clone(&currentSite);
 
         thread::spawn(move || {
-            handle_connection(stream);
+            handle_connection(stream, currentSite);
         });
     }
 }
@@ -48,7 +51,7 @@ fn make_https_request(website: String, request: &[u8]) -> Vec<u8> {
     response
 }
 
-fn handle_connection(mut stream: TcpStream) {
+fn handle_connection(mut stream: TcpStream, mut currentSite: Arc<Mutex<String>>) {
     let mut buf_reader = BufReader::new(&stream);
 
     let mut line_buf = String::new();
@@ -79,22 +82,89 @@ fn handle_connection(mut stream: TcpStream) {
         headers.insert(key.to_string(), value.to_string());
     }
 
-    // We need to parse every request going to localhost and proxy it
-    // For example, when using cool math games, it needs http://localhost/sites/default/files/2024-09/Simulation.svg
-    // so we will request https://www.coolmathgames/sites/default/files/2024-09/Simulation.svg and return it.
+    // Braces added so we drop the lock after cloning
+    let tag = { currentSite.lock().unwrap().clone() };
 
-    let req = String::new();
+    // Check for special routes
 
-    let new_req = format!(
-        "GET {} HTTP/1.1\r\nHost: www.coolmathgames.com\r\nConnection: close\r\nAccept-Encoding: identity\r\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:135.0) Gecko/20100101 Firefox/135.0\r\n\r\n", *request_parts.get(1).expect("Bad Request")
-    );
+    match request_parts.get(1) {
+        Some(route) => {
+            if *route == "/resetroute" {
+                let mut currentSite = currentSite.lock().unwrap();
+                *currentSite = "".to_string();
 
-    println!("{}", new_req);
+                let status_line = "HTTP/1.1 200 OK";
+                let contents = fs::read_to_string("connect.html").unwrap();
+                let length = contents.len();
 
-    stream
-        .write_all(&make_https_request(
-            "www.coolmathgames.com".into(),
-            new_req.as_bytes(),
-        ))
-        .unwrap();
+                let response =
+                    format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
+
+                stream.write_all(response.as_bytes()).unwrap();
+
+                return;
+            } else {
+                let mut comps = route.split("/");
+                let _ = comps.next();
+                match comps.next() {
+                    Some(root) => {
+                        if root == "changesite" {
+                            match comps.next() {
+                                Some(site) => {
+                                    let mut currentSite = currentSite.lock().unwrap();
+                                    *currentSite = site.to_string();
+
+                                    let status_line = "HTTP/1.1 200 OK";
+                                    let contents = fs::read_to_string("connect.html").unwrap();
+                                    let length = contents.len();
+
+                                    let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
+
+                                    stream.write_all(response.as_bytes()).unwrap();
+
+                                    return;
+                                }
+                                None => (),
+                            }
+                        }
+                    }
+                    None => (),
+                }
+            }
+        }
+        None => (),
+    }
+
+    // Current site is currently established
+    if tag != "" {
+        let mut req = String::new();
+        req.push_str(&line_buf); // Add request line
+
+        headers.insert("Host".to_string(), tag.clone());
+        headers.insert("Connection".to_string(), "close".to_string());
+        //headers.insert("Accept-Encoding".to_string(), "identity".to_string());
+        headers.remove("Site-Tag");
+
+        // We can take ownership of the string here because we want to
+        for (header, value) in headers {
+            req.push_str(&format!("{}: {}", header, value));
+            req.push_str("\r\n");
+        }
+
+        req.push_str("\r\n");
+
+        stream
+            .write_all(&make_https_request(tag.clone(), req.as_bytes()))
+            .unwrap();
+    } else {
+        let status_line = "HTTP/1.1 200 OK";
+        let contents = fs::read_to_string("connect.html").unwrap();
+        let length = contents.len();
+
+        let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
+
+        stream.write_all(response.as_bytes()).unwrap();
+    }
+
+    //println!("{}", req);
 }
