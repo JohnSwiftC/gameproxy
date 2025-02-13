@@ -13,7 +13,7 @@ use rustls::{
 };
 
 fn main() {
-    let listener = TcpListener::bind("127.0.0.1:80").unwrap();
+    let listener = TcpListener::bind("0.0.0.0:8080").unwrap();
     let currentSite = Arc::new(Mutex::new(String::new()));
 
     for stream in listener.incoming() {
