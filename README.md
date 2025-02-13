@@ -6,7 +6,9 @@ Hides traffic with a fake home page.
 
 # Build
 
-Build with `cargo build --release`, or as highly reccomended, use as part of a Docker compose stack with NGINX.
+Build with `cargo build --release`.
+
+When executing, ensure your current working directory is that of the `connect.html` file.
 
 # Usage
 

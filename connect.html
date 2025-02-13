@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+     TeX: { equationNumbers: { autoNumber: "AMS" } }
+    });
+  </script>
+  <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-AMS_CHTML-full"></script>
+  <h1>
+    Introduction to Integration
+  </h1>
+  <p>
+    Integration is the process by which you can find the area under a curve or function. The simple principle comes from the Riemann sum, which is an infinite sum over small rectangles under a curve.
+  </p>
+  <p>
+    The process, for a discrete range say a to b, is defined as the limit as n approaches infinity, of the sum K=1 -> n * f(a + kdx/n)(dx/n).
+  </p>
+  <h4>Interpretations of Definite Integral</h4>
+  <p>There are a couple of quick interpretations of the definite integral that we can give here.</p>
+  
+  <p>First, as we alluded to in the previous section one possible interpretation of the definite integral is to give the net area between the graph of \(f\left( x \right)\) and the \(x\)-axis on the interval \(\left[ {a,b} \right]\).  So, the net area between the graph of \(f\left( x \right) = {x^2} + 1\) and the \(x\)-axis on \(\left[ {0,2} \right]\) is,</p>
+  
+      \[\int_{{\,0}}^{{\,2}}{{{x^2} + 1\,dx}} = \frac{{14}}{3}\]
+  
+  <p>If you look back in the last section this was the exact area that was given for the initial set of problems that we looked at in this area.</p>
+  
+  <p>Another interpretation is sometimes called the Net Change Theorem.  This interpretation says that if \(f\left( x \right)\) is some quantity (so \(f'\left( x \right)\) is the rate of change of \(f\left( x \right)\)) then,</p>
+  
+      \[\int_{{\,a}}^{{\,b}}{{f'\left( x \right)\,dx}} = f\left( b \right) - f\left( a \right)\]
+
+  <p>is the net change in \(f\left( x \right)\) on the interval \(\left[ {a,b} \right]\).  In other words, compute the definite integral of a rate of change and you’ll get the net change in the quantity.  We can see that the value of the definite integral, \(f\left( b \right) - f\left( a \right)\), does in fact give us the net change in \(f\left( x \right)\) and so there really isn’t anything to prove with this statement.  This is really just an acknowledgment of what the definite integral of a rate of change tells us.</p>
+  
+  <p>So as a quick example, if \(V\left( t \right)\) is the volume of water in a tank then,</p>
+  
+    \[\int_{{\,{t_1}}}^{{\,{t_2}}}{{V'\left( t \right)\,dt}} = V\left( {{t_2}} \right) - V\left( {{t_1}} \right)\]
+
+  <p>is the net change in the volume as we go from time \({t_1}\) to time \({t_2}\).</p>
+  
+  <p>Likewise, if \(s\left( t \right)\) is the function giving the position of some object at time \(t\) we know that the velocity of the object at any time \(t\) is : \(v\left( t \right) = s'\left( t \right)\).  Therefore, the displacement of the object from time \({t_1}\) to time \({t_2}\) is,</p>
+  
+    \[\int_{{\,{t_1}}}^{{\,{t_2}}}{{v\left( t \right)\,dt}} = s\left( {{t_2}} \right) - s\left( {{t_1}} \right)\]
+
+  <p>Note that in this case if \(v\left( t \right)\) is both positive and negative (<em>i.e.</em> the object moves to both the right and left) in the time frame this will NOT give the total distance traveled.  It will only give the displacement, <em>i.e.</em> the difference between where the object started and where it ended up.  To get the total distance traveled by an object we’d have to compute,</p>
+  
+      \[\int_{{\,{t_1}}}^{{\,{t_2}}}{{\left| {v\left( t \right)} \right|\,dt}}\]
+  
+  <p>It is important to note here that the Net Change Theorem only really makes sense if we’re integrating a derivative of a function.</p>
+  
+  <h4>Fundamental Theorem of Calculus, Part I</h4>
+  <p>As noted by the title above this is only the first part to the Fundamental Theorem of Calculus.  We will give the second part in the next section as it is the key to easily computing definite integrals and that is the subject of the next section.</p>
+  
+  <p>The first part of the Fundamental Theorem of Calculus tells us how to differentiate certain types of definite integrals and it also tells us about the very close relationship between integrals and derivatives.</p>
+</html>
